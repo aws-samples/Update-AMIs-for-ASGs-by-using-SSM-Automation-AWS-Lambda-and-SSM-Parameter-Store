@@ -1,0 +1,129 @@
+description: Systems Manager Automation Demo - Patch AMI and Update ASG
+schemaVersion: '0.3'
+assumeRole: '{{ AutomationAssumeRole }}'
+parameters:
+  AutomationAssumeRole:
+    type: String
+    description: (Required) The ARN of the role that allows Automation to perform the actions on your behalf. If no role is specified, Systems Manager Automation uses your IAM permissions to execute this document.
+    default: ''
+  SourceAMI:
+    type: String
+    description: The ID of the AMI you want to patch.
+    default: '{{ ssm:latestAmi }}'
+  SubnetId:
+    type: String
+    description: The ID of the subnet where the instance from the SourceAMI parameter is launched.
+  SecurityGroupIds:
+    type: StringList
+    description: The IDs of the security groups to associate with the instance that's launched from the SourceAMI parameter.
+  NewAMI:
+    type: String
+    description: The name of of newly patched AMI.
+    default: patchedAMI-{{global:DATE_TIME}}
+  InstanceProfile:
+    type: String
+    description: The name of the IAM instance profile you want the source instance to use.
+  SnapshotId:
+    type: String
+    description: (Optional) The snapshot ID to use to retrieve a patch baseline snapshot.
+    default: ''
+  RebootOption:
+    type: String
+    description: (Optional) Reboot behavior after a patch Install operation. If you choose NoReboot and patches are installed, the instance is marked as non-compliant until a subsequent reboot and scan.
+    allowedValues:
+      - NoReboot
+      - RebootIfNeeded
+    default: RebootIfNeeded
+  Operation:
+    type: String
+    description: (Optional) The update or configuration to perform on the instance. The system checks if patches specified in the patch baseline are installed on the instance. The install operation installs patches missing from the baseline.
+    allowedValues:
+      - Install
+      - Scan
+    default: Install
+mainSteps:
+  - name: startInstances
+    action: aws:runInstances
+    maxAttempts: 1
+    timeoutSeconds: 1200
+    nextStep: verifyInstanceManaged
+    isEnd: false
+    onFailure: Abort
+    inputs:
+      ImageId: '{{ SourceAMI }}'
+      InstanceType: m5.large
+      MinInstanceCount: 1
+      MaxInstanceCount: 1
+      IamInstanceProfileName: '{{ InstanceProfile }}'
+      SubnetId: '{{ SubnetId }}'
+      SecurityGroupIds: '{{ SecurityGroupIds }}'
+  - name: verifyInstanceManaged
+    action: aws:waitForAwsResourceProperty
+    timeoutSeconds: 600
+    nextStep: installPatches
+    isEnd: false
+    onFailure: step:terminateInstance
+    inputs:
+      Service: ssm
+      Api: DescribeInstanceInformation
+      InstanceInformationFilterList:
+        - key: InstanceIds
+          valueSet:
+            - '{{ startInstances.InstanceIds }}'
+      PropertySelector: $.InstanceInformationList[0].PingStatus
+      DesiredValues:
+        - Online
+  - name: installPatches
+    action: aws:runCommand
+    timeoutSeconds: 7200
+    nextStep: stopInstance
+    isEnd: false
+    onFailure: step:terminateInstance
+    inputs:
+      DocumentName: AWS-RunPatchBaseline
+      Parameters:
+        SnapshotId: '{{SnapshotId}}'
+        RebootOption: '{{RebootOption}}'
+        Operation: '{{Operation}}'
+      InstanceIds:
+        - '{{ startInstances.InstanceIds }}'
+  - name: stopInstance
+    action: aws:changeInstanceState
+    maxAttempts: 1
+    nextStep: createImage
+    isEnd: false
+    onCancel: Abort
+    onFailure: step:terminateInstance
+    inputs:
+      InstanceIds:
+        - '{{ startInstances.InstanceIds }}'
+      DesiredState: stopped
+  - name: createImage
+    action: aws:createImage
+    maxAttempts: 1
+    nextStep: terminateInstance
+    isEnd: false
+    onFailure: step:terminateInstance
+    inputs:
+      InstanceId: '{{ startInstances.InstanceIds }}'
+      ImageName: '{{ NewAMI }}'
+      NoReboot: false
+      ImageDescription: Patched AMI created by Automation
+  - name: terminateInstance
+    action: aws:changeInstanceState
+    maxAttempts: 1
+    nextStep: InvokeLambdaFunction
+    isEnd: false
+    onFailure: Abort
+    inputs:
+      InstanceIds:
+        - '{{ startInstances.InstanceIds }}'
+      DesiredState: terminated
+  - name: InvokeLambdaFunction
+    action: aws:invokeLambdaFunction
+    isEnd: true
+    inputs:
+      FunctionName: arn:aws:lambda:us-east-1:891377400485:function:UpdateSSMParameter
+      Payload: '{"parameterName":"latestAmi", "parameterValue":"{{createImage.ImageId}}"}'
+outputs:
+  - createImage.ImageId
