@@ -23,7 +23,7 @@ The architecture of the solution can be broken down into sixsteps. Which are out
 
 6.    Update the parameter store using Lambda
 
-![_Figure 1 – Architecture Diagram for updating AMI ID using SSM and lambda_](images/arch.png)
+![_Figure 1 – Architecture Diagram for updating AMI ID using SSM and lambda_](static/arch.png)
 
 
 
@@ -104,7 +104,7 @@ Create a stringparameter in Parameter Store that uses the following information:
 ·       Data Type: aws:ec2:image
 
 An example isdisplayed below, in Figure 2.
-![_Figure 2: Create aparameter in SSM parameter store_](images/param.png)
+![_Figure 2: Create aparameter in SSM parameter store_](static/param.png)
 _Figure 2: Create aparameter in SSM parameter store_
 
 Task3: **Create an AWS Lambda function**
@@ -242,23 +242,23 @@ Toupdate a launch template that specifies a parameter for the AMI, use one of th
 2.    In the navigationpane, choose Launch Templates, and then choose the Launch Template ID that wasdeployed by the CloudFormation template and select **Actions > Modifytemplate**.
 
 3.    Under Applicationand OS Images (Amazon Machine Image), choose **Browse more AMIs**.
-![__Figure 3– Browse more AMIs__](images/ami.png)
+![__Figure 3– Browse more AMIs__](static/ami.png)
 
               _Figure 3– Browse more AMIs_
 
 4.    Choose the arrow button to the right of thesearch bar, and then choose **Specify custom value/Systems Manager parameter.**
-![__Figure 4 – chooseSpecify custom value/Systems Manager parameter__](images/value.png)
+![__Figure 4 – chooseSpecify custom value/Systems Manager parameter__](static/value.png)
 
 _Figure 4 – chooseSpecify custom value/Systems Manager parameter_**.**
 
 5.    In the Specify custom value or Systems Managerparameter, enter **“resolve:ssm:latestAmi”**
-![__Specify custom value or Systems Manager parameter__](images/resolve.png)
+![__Specify custom value or Systems Manager parameter__](static/resolve.png)
 _Figure 5 –_ _Specify custom value or Systems Manager parameter_
 
 6.    Save the changes and select **“Create templateversion”.**
 
 7.    Ensure you have the new version is the **“defaultversion”.**
-![__Set the template to Default Version__](images/default.png)
+![__Set the template to Default Version__](static/default.png)
 
 _Figure 6 –_ _Set the template to Default Version_
 
@@ -566,6 +566,6 @@ By setting up this event ruleand SNS topic, you will receive notifications whene
 
 ### **Summary**
 
-This blog demonstrates how toautomatically keep AMIs up-to-date for Auto Scaling groups by leveraging AWSSystems Manager Automation, Lambda, and Parameter Store. Instead of manuallypatching AMIs, you can set up an automated workflow to patch the current goldenAMI, create a new patched AMI version, and update the AMI parameter referencedby your Auto Scaling groups. This approach ensures your infrastructure uses thelatest, fully patched AMIs without any manual efforts.
+This blog demonstrates how toautomatically keep AMIs up-to-date for Auto Scaling groups by leveraging AWSSystems Manager Automation, Lambda, and Parameter Store. Instead of manuallypatching AMIs, you can set up an automated workflow to patch the current goldenAMI, create a new patched AMI version, and update the AMI parameter referencedby your Auto Scaling groups. This approach ensures your infrastructure uses the latest, fully patched AMIs without any manual efforts.
 
-While this use case focused on patching AMIs, the automation capabilities of AWS Systems Manager can beextended to consistently maintain other aspects of your AWS environment. Tryout this solution yourself and experience how Automation runbooks can streamlineyour operations.
+While this use case focused on patching AMIs, the automation capabilities of AWS Systems Manager can beextended to consistently maintain other aspects of your AWS environment. Tryout this solution yourself and experience how Automation runbooks can stream line your operations.
