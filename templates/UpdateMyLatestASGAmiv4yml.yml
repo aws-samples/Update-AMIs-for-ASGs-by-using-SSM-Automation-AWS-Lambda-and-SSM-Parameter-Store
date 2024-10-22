@@ -1,0 +1,54 @@
+Metadata:
+  TemplateId: arn:aws:cloudformation:us-east-1:318930907812:generatedTemplate/73f97f19-eca1-4e2f-b853-ea80e03c5b21
+Resources:
+  EC2SecurityGroup00sg0a124d523acfda30f00HAysA:
+    UpdateReplacePolicy: Delete
+    Type: AWS::EC2::SecurityGroup
+    DeletionPolicy: Delete
+    Properties:
+      GroupDescription: Associated with VPC-vpc-0d7aafc763676aea4 and tagged as GuardDutyManaged
+      GroupName: GuardDutyManagedSecurityGroup-vpc-0d7aafc763676aea4
+      VpcId: vpc-0d7aafc763676aea4
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+      Tags:
+        - Value: 'true'
+          Key: GuardDutyManaged
+  EC2VPCDHCPOptionsAssociation00vpc094b21920843b4e7a00CY9hL:
+    UpdateReplacePolicy: Delete
+    Type: AWS::EC2::VPCDHCPOptionsAssociation
+    DeletionPolicy: Delete
+    Properties:
+      VpcId: vpc-094b21920843b4e7a
+      DhcpOptionsId: !Ref EC2DHCPOptions00dopt903c99ea006bvC8
+  EC2DHCPOptions00dopt903c99ea006bvC8:
+    UpdateReplacePolicy: Delete
+    Type: AWS::EC2::DHCPOptions
+    DeletionPolicy: Delete
+    Properties:
+      DomainName: ec2.internal
+      DomainNameServers:
+        - AmazonProvidedDNS
+      Tags: []
+  EC2SecurityGroup00sg0e18f2c9af330938500RfgXV:
+    UpdateReplacePolicy: Delete
+    Type: AWS::EC2::SecurityGroup
+    DeletionPolicy: Delete
+    Properties:
+      GroupDescription: default VPC security group
+      GroupName: default
+      VpcId: vpc-094b21920843b4e7a
+      SecurityGroupIngress:
+        - IpProtocol: '-1'
+          FromPort: -1
+          SourceSecurityGroupId: sg-0e18f2c9af3309385
+          ToPort: -1
+          SourceSecurityGroupOwnerId: '318930907812'
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: '-1'
+          FromPort: -1
+          ToPort: -1
